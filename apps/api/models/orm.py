@@ -129,8 +129,10 @@ class Log(Base):
     __tablename__ = "logs"
     
     id = Column(Integer, primary_key=True)
-    level = Column(String(20), nullable=False)
-    logger_name = Column(String(255), nullable=True)
-    message = Column(Text, nullable=False)
-    meta = Column(JSON, nullable=True)
+    message_id = Column(Integer, nullable=True)
+    draft_id = Column(Integer, nullable=True)
+    log_type = Column(String(50), nullable=True)
+    input_data = Column(JSON, nullable=True)
+    output_data = Column(JSON, nullable=True)
+    model_used = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
