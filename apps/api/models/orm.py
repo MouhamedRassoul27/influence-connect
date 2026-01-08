@@ -22,7 +22,7 @@ class Message(Base):
     sender_username = Column(String(255), nullable=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     __table_args__ = (
         Index('idx_messages_thread', 'thread_id'),
@@ -41,7 +41,7 @@ class Thread(Base):
     status = Column(String(20), default='open')
     last_message_at = Column(DateTime, server_default=func.now())
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     __table_args__ = (
         Index('idx_threads_status', 'status'),
@@ -69,7 +69,7 @@ class Draft(Base):
     verification_issues = Column(JSON, nullable=True)
     requires_hitl = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
 
 class Approval(Base):
     """HITL approvals"""
@@ -98,7 +98,7 @@ class Influencer(Base):
     categories = Column(ARRAY(String), nullable=True)
     verified = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
 
 class KnowledgeDoc(Base):
     """Knowledge base documents for RAG"""
@@ -110,7 +110,7 @@ class KnowledgeDoc(Base):
     category = Column(String(100), nullable=True)
     source = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
 
 class TrackingEvent(Base):
     """Analytics and tracking"""
@@ -132,5 +132,5 @@ class Log(Base):
     level = Column(String(20), nullable=False)
     logger_name = Column(String(255), nullable=True)
     message = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
