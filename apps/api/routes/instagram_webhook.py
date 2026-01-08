@@ -5,8 +5,14 @@ Receive real-time DMs and comments from Instagram
 
 import logging
 import os
+import sys
+from pathlib import Path
+
 from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from db.database import get_db
 from services.instagram_webhook import InstagramWebhookService
