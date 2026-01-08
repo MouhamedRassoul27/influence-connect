@@ -44,8 +44,8 @@ async def process_message(
         # 1. Save message
         result = await db.execute(
             text("""
-                INSERT INTO messages (platform, message_type, sender_id, sender_username, content, thread_id, metadata)
-                VALUES (:platform, :message_type, :sender_id, :sender_username, :content, :thread_id, :metadata)
+                INSERT INTO messages (platform, message_type, sender_id, sender_username, content, thread_id, meta)
+                VALUES (:platform, :message_type, :sender_id, :sender_username, :content, :thread_id, :meta)
                 RETURNING id
             """),
             {
@@ -55,7 +55,7 @@ async def process_message(
                 "sender_username": message.sender_username,
                 "content": message.content,
                 "thread_id": message.thread_id,
-                "metadata": json.dumps(message.metadata) if message.metadata else '{}'
+                "meta": json.dumps(message.metadata) if message.metadata else '{}'
             }
         )
         await db.commit()
