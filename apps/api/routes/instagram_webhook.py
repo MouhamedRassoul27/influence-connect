@@ -18,6 +18,10 @@ from db.database import get_db
 from services.instagram_webhook import InstagramWebhookService
 from services.pipeline import AIPipeline
 from models.orm import Message, Thread
+from services.classifier import ClassifierService
+from services.rag import RAGService
+from services.drafter import DrafterService
+from services.verifier import VerifierService
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +35,6 @@ instagram_service = InstagramWebhookService(
     verify_token=INSTAGRAM_VERIFY_TOKEN,
     app_secret=INSTAGRAM_APP_SECRET
 )
-
-# Initialize Pipeline
-pipeline = AIPipeline()
 
 
 @router.get("/webhook")
@@ -102,6 +103,14 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         message_id = message_obj.id
         logger.info(f"💾 Saved message to DB: id={message_id}")
         
+        # Initialize pipeline
+        pipeline = AIPipeline(
+            classifier=ClassifierService(),
+            rag=RAGService(),
+            drafter=DrafterService(),
+            verifier=VerifierService()
+        )
+        
         # Process through pipeline
         logger.info(f"🚀 Processing through AI pipeline...")
         result = await pipeline.process(
@@ -163,6 +172,14 @@ async def test_webhook(payload: dict, db: AsyncSession = Depends(get_db)):
         )
         db.add(message_obj)
         await db.commit()
+        
+        # Initialize pipeline
+        pipeline = AIPipeline(
+            classifier=ClassifierService(),
+            rag=RAGService(),
+            drafter=DrafterService(),
+            verifier=VerifierService()
+        )
         
         # Process
         result = await pipeline.process(
