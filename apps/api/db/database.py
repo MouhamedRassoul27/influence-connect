@@ -5,9 +5,9 @@ Database connection et utilitaires
 import logging
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
 from sqlalchemy import text
 from config import settings
+from models.orm import Base
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,6 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
-Base = declarative_base()
-
 async def init_db():
     """Initialize database tables with retry logic"""
     max_retries = 5
@@ -40,17 +38,30 @@ async def init_db():
     
     for attempt in range(max_retries):
         try:
+            logger.info(f"📊 Database init attempt {attempt + 1}/{max_retries}...")
+            
+            # Create pgvector extension first
             async with engine.begin() as conn:
-                result = await conn.execute(text("SELECT 1"))
-                logger.info("✅ Database connection initialized")
-                return
+                try:
+                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                    logger.info("✅ pgvector extension loaded")
+                except Exception as e:
+                    logger.warning(f"⚠️  pgvector not available: {e}")
+            
+            # Create all tables from ORM models
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+                logger.info("✅ All database tables created successfully")
+            
+            return True
+            
         except Exception as e:
             if attempt < max_retries - 1:
                 logger.warning(f"⚠️  Database connection attempt {attempt + 1}/{max_retries} failed: {e}")
                 await asyncio.sleep(retry_delay)
             else:
-                logger.error(f"❌ Database connection failed after {max_retries} attempts: {e}")
-                logger.info("⚠️  Continuing without database - queries will fail gracefully")
+                logger.error(f"❌ Database initialization failed after {max_retries} attempts: {e}")
+                raise
     
 async def get_db() -> AsyncSession:
     """Dependency for FastAPI routes"""
