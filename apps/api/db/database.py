@@ -15,7 +15,8 @@ DATABASE_URL = settings.database_url.replace("postgresql://", "postgresql+asyncp
 engine = create_async_engine(
     DATABASE_URL,
     echo=settings.environment == "development",
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    pool_recycle=3600
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -29,7 +30,8 @@ Base = declarative_base()
 async def init_db():
     """Initialize database tables"""
     logger.info("✅ Database connection initialized")
-    # Tables are created via init.sql in docker-compose
+    # Tables are created via init.sql in Railway
+    # If they don't exist, queries will fail gracefully
     
 async def get_db() -> AsyncSession:
     """Dependency for FastAPI routes"""
