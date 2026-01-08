@@ -117,8 +117,7 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         logger.info(f"🚀 Processing through AI pipeline...")
         result = await pipeline.process(
             message=pipeline_input["message"],
-            sender_id=pipeline_input["user_id"],
-            thread_id=pipeline_input["thread_id"],
+            message_id=message_id,
             db=db
         )
         
@@ -188,8 +187,7 @@ async def test_webhook(payload: dict, db: AsyncSession = Depends(get_db)):
         # Process
         result = await pipeline.process(
             message=pipeline_input["message"],
-            sender_id=pipeline_input["user_id"],
-            thread_id=pipeline_input["thread_id"],
+            message_id=message_obj.id,
             db=db
         )
         
