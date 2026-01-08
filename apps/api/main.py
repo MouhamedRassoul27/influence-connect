@@ -62,7 +62,24 @@ async def root():
         "service": "Influence Connect API",
         "version": "1.0.0",
         "status": "running",
-        "docs": "/docs"
+        "docs": "/docs",
+        "health": "/api/health"
+    }
+
+@app.get("/api")
+async def api_root():
+    return {
+        "service": "Influence Connect API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/api/health",
+            "docs": "/docs",
+            "messages": "/api/messages",
+            "influencers": "/api/influencers",
+            "tracking": "/api/tracking"
+        }
+    }
     }
 
 if __name__ == "__main__":
