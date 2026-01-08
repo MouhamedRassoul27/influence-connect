@@ -6,6 +6,7 @@ Receive real-time DMs and comments from Instagram
 import logging
 import os
 import sys
+import requests
 from pathlib import Path
 
 from fastapi import APIRouter, Request, HTTPException, Depends
@@ -29,6 +30,8 @@ router = APIRouter(prefix="/api/instagram", tags=["instagram"])
 # Initialize Instagram Webhook Service
 INSTAGRAM_VERIFY_TOKEN = os.getenv("INSTAGRAM_VERIFY_TOKEN", "test-verify-token-123")
 INSTAGRAM_APP_SECRET = os.getenv("INSTAGRAM_APP_SECRET", "test-app-secret")
+INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+INSTAGRAM_ACCOUNT_ID = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
 
 instagram_service = InstagramWebhookService(
     verify_token=INSTAGRAM_VERIFY_TOKEN,
@@ -147,6 +150,101 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return {"status": "error", "reason": str(e)}
 
 
+@router.get("/fetch-real-messages")
+async def fetch_real_messages(db: AsyncSession = Depends(get_db)):
+    """
+    Fetch real messages from Instagram Graph API
+    Uses existing access token to poll for new messages
+    Useful when webhooks aren't ready yet
+    """
+    try:
+        if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
+            return {
+                "status": "error",
+                "reason": "INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID not configured"
+            }
+        
+        logger.info("📱 Fetching real messages from Instagram API...")
+        
+        # Get conversations
+        url = f"https://graph.instagram.com/v18.0/{INSTAGRAM_ACCOUNT_ID}/conversations"
+        params = {
+            "fields": "id,senders,participants,updated_time,messages",
+            "access_token": INSTAGRAM_ACCESS_TOKEN,
+            "limit": 10
+        }
+        
+        response = requests.get(url, params=params)
+        if response.status_code != 200:
+            logger.error(f"Instagram API error: {response.text}")
+            return {"status": "error", "reason": response.text}
+        
+        conversations = response.json().get("data", [])
+        logger.info(f"✅ Found {len(conversations)} conversations")
+        
+        processed_count = 0
+        
+        for conv in conversations:
+            conv_id = conv.get("id")
+            messages = conv.get("messages", {}).get("data", [])
+            
+            for msg in messages:
+                msg_id = msg.get("id")
+                
+                # Check if already in DB
+                existing = await db.execute(
+                    f"SELECT id FROM messages WHERE platform_message_id = '{msg_id}' LIMIT 1"
+                )
+                if existing.scalar():
+                    continue
+                
+                # Create message object
+                message_obj = Message(
+                    platform="instagram",
+                    platform_message_id=msg_id,
+                    message_type="dm",
+                    sender_id=msg.get("from", {}).get("id", "unknown"),
+                    sender_username=msg.get("from", {}).get("username", "unknown"),
+                    content=msg.get("message", ""),
+                    meta={
+                        "conversation_id": conv_id,
+                        "real_message": True,
+                        "timestamp": msg.get("created_timestamp")
+                    }
+                )
+                db.add(message_obj)
+                await db.commit()
+                
+                logger.info(f"💾 Saved real message: {msg_id}")
+                
+                # Process through pipeline
+                pipeline = AIPipeline(
+                    classifier=MockClassifierService(),
+                    rag=RAGService(),
+                    drafter=MockDrafterService(),
+                    verifier=MockVerifierService()
+                )
+                
+                result = await pipeline.process(
+                    message=msg.get("message", ""),
+                    message_id=message_obj.id,
+                    db=db
+                )
+                
+                logger.info(f"✅ Processed message: {result.get('verification_verdict')}")
+                processed_count += 1
+        
+        return {
+            "status": "ok",
+            "conversations_checked": len(conversations),
+            "messages_processed": processed_count
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching real messages: {e}", exc_info=True)
+        return {"status": "error", "reason": str(e)}
+
+
 
 @router.delete("/webhook/uninstall")
 async def uninstall_webhook():
@@ -180,35 +278,39 @@ async def instagram_webhook_status():
     }
 
 
-@router.post("/test")
-async def test_webhook(payload: dict, db: AsyncSession = Depends(get_db)):
+@router.post("/demo")
+async def demo_message(
+    message: str = "Bonjour, quelle est votre meilleure crème anti-âge?",
+    sender_name: str = "Jury Member",
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Test webhook with mock Instagram payload
-    Useful for local testing without real Instagram account
+    Demo endpoint - Simulate receiving an Instagram message
+    Useful for presentations when webhooks aren't ready yet
     """
     try:
-        logger.info(f"🧪 Testing with payload: {payload}")
+        logger.info(f"🎬 DEMO: Simulating message: {message}")
         
-        webhook_event = instagram_service.parse_webhook_event(payload)
-        if not webhook_event:
-            return {"error": "Invalid payload"}
-        
-        pipeline_input = instagram_service.format_for_pipeline(webhook_event)
-        
-        # Save message
+        # Create a mock message object
         message_obj = Message(
             platform="instagram",
-            platform_message_id=webhook_event.get("message_id"),
-            message_type="dm" if webhook_event.get("event_type") == "dm" else "comment",
-            sender_id=pipeline_input["user_id"],
-            sender_username=pipeline_input["user_name"],
-            content=pipeline_input["message"],
-            meta=pipeline_input["meta"]
+            platform_message_id=f"demo_{int(__import__('time').time())}",
+            message_type="dm",
+            sender_id="demo_user_123",
+            sender_username=sender_name,
+            content=message,
+            meta={
+                "demo": True,
+                "source": "demo_endpoint"
+            }
         )
         db.add(message_obj)
         await db.commit()
         
-        # Initialize pipeline with mock services
+        message_id = message_obj.id
+        logger.info(f"💾 Saved demo message to DB: id={message_id}")
+        
+        # Initialize pipeline with real or mock services
         pipeline = AIPipeline(
             classifier=MockClassifierService(),
             rag=RAGService(),
@@ -216,20 +318,26 @@ async def test_webhook(payload: dict, db: AsyncSession = Depends(get_db)):
             verifier=MockVerifierService()
         )
         
-        # Process
+        # Process through pipeline
+        logger.info(f"🚀 Processing demo message through AI pipeline...")
         result = await pipeline.process(
-            message=pipeline_input["message"],
-            message_id=message_obj.id,
+            message=message,
+            message_id=message_id,
             db=db
         )
         
+        logger.info(f"✅ Demo processing complete: verdict={result.get('verification_verdict')}")
+        
         return {
-            "success": True,
-            "message_id": message_obj.id,
-            "event_type": webhook_event.get("event_type"),
-            "result": result
+            "status": "ok",
+            "demo": True,
+            "message_id": message_id,
+            "sender": sender_name,
+            "message": message,
+            "result": result,
+            "timestamp": __import__('datetime').datetime.utcnow().isoformat()
         }
         
     except Exception as e:
-        logger.error(f"❌ Test error: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ Demo error: {e}", exc_info=True)
+        return {"status": "error", "reason": str(e)}
