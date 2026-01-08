@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from config import settings
-from routes import health, messages, influencers, tracking, eval_routes
+from routes import health, messages, influencers, tracking, eval_routes, comments_ambassadors
 from db.database import init_db
 
 # Configure logging
@@ -52,6 +52,7 @@ app.add_middleware(
 # Routes
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(messages.router, prefix="/api/messages", tags=["messages"])
+app.include_router(comments_ambassadors.router, prefix="/api", tags=["comments", "ambassadors"])
 app.include_router(influencers.router, prefix="/api/influencers", tags=["influencers"])
 app.include_router(tracking.router, prefix="/api/tracking", tags=["tracking"])
 app.include_router(eval_routes.router, prefix="/api/eval", tags=["evaluation"])
