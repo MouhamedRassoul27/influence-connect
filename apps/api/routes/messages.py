@@ -8,20 +8,30 @@ from sqlalchemy import text
 import logging
 import json
 
+from config import settings
 from db.database import get_db
 from models.schemas import IncomingMessage, ProcessedMessage, ApprovalAction
 from services.pipeline import AIPipeline
-from services.mock_ai import MockClassifierService, MockDrafterService, MockVerifierService
 from services.rag import RAGService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Initialize services (using mocks - no Anthropic API needed)
-classifier_service = MockClassifierService()
+# Use real Claude models if API key is available, otherwise use mocks
+if settings.anthropic_api_key:
+    logger.info("✅ Using REAL Claude AI services")
+    from services.real_ai import RealClassifierService, RealDrafterService, RealVerifierService
+    classifier_service = RealClassifierService()
+    drafter_service = RealDrafterService()
+    verifier_service = RealVerifierService()
+else:
+    logger.info("⚠️  Using MOCK AI services (no ANTHROPIC_API_KEY set)")
+    from services.mock_ai import MockClassifierService, MockDrafterService, MockVerifierService
+    classifier_service = MockClassifierService()
+    drafter_service = MockDrafterService()
+    verifier_service = MockVerifierService()
+
 rag_service = RAGService()
-drafter_service = MockDrafterService()
-verifier_service = MockVerifierService()
 pipeline = AIPipeline(classifier_service, rag_service, drafter_service, verifier_service)
 
 @router.post("/process", response_model=ProcessedMessage)
