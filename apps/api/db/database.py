@@ -48,8 +48,11 @@ async def init_db():
                 except Exception as e:
                     logger.warning(f"⚠️  pgvector not available: {e}")
             
-            # Create all tables from ORM models
+            # Drop all tables and recreate (clean slate)
             async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.drop_all)
+                logger.info("🗑️  Dropped all existing tables")
+                
                 await conn.run_sync(Base.metadata.create_all)
                 logger.info("✅ All database tables created successfully")
             
