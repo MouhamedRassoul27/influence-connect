@@ -5,6 +5,9 @@ WORKDIR /app
 # Copy dependencies
 COPY requirements.txt .
 
+# Remove heavy packages not needed for mocks
+RUN sed -i '/torch/d; /sentence-transformers/d' requirements.txt
+
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
