@@ -91,12 +91,11 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         
         # Save to database as message
         message_obj = Message(
-            sender_id=pipeline_input["user_id"],
-            sender_username=pipeline_input["user_name"],
-            thread_id=pipeline_input["thread_id"],
             platform="instagram",
             platform_message_id=webhook_event.get("message_id"),
             message_type="dm" if webhook_event.get("event_type") == "dm" else "comment",
+            sender_id=pipeline_input["user_id"],
+            sender_username=pipeline_input["user_name"],
             content=pipeline_input["message"],
             meta=pipeline_input["meta"]
         )
@@ -167,12 +166,11 @@ async def test_webhook(payload: dict, db: AsyncSession = Depends(get_db)):
         
         # Save message
         message_obj = Message(
-            sender_id=pipeline_input["user_id"],
-            sender_username=pipeline_input["user_name"],
-            thread_id=pipeline_input["thread_id"],
             platform="instagram",
             platform_message_id=webhook_event.get("message_id"),
             message_type="dm" if webhook_event.get("event_type") == "dm" else "comment",
+            sender_id=pipeline_input["user_id"],
+            sender_username=pipeline_input["user_name"],
             content=pipeline_input["message"],
             meta=pipeline_input["meta"]
         )
