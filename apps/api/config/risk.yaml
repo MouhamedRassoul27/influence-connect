@@ -1,0 +1,107 @@
+# Risk Flags (détection automatique)
+risk_flags:
+  - id: medical
+    name: "Conseil médical"
+    description: "Demande de diagnostic, traitement médical"
+    keywords: 
+      - "diagnostic"
+      - "traiter"
+      - "guérir"
+      - "maladie"
+      - "pathologie"
+      - "médecin"
+      - "dermatologue"
+      - "prescription"
+    severity: critical
+    auto_escalate: true
+    
+  - id: allergy_adverse
+    name: "Allergie / Effet indésirable"
+    description: "Réaction allergique, effet secondaire"
+    keywords:
+      - "allergie"
+      - "allergique"
+      - "réaction"
+      - "rougeur"
+      - "démangeaison"
+      - "brûlure"
+      - "gonflement"
+      - "irritation"
+      - "effet secondaire"
+    severity: critical
+    auto_escalate: true
+    
+  - id: minors
+    name: "Mineurs"
+    description: "Utilisateur mineur (< 18 ans)"
+    keywords:
+      - "j'ai 12 ans"
+      - "j'ai 13 ans"
+      - "j'ai 14 ans"
+      - "j'ai 15 ans"
+      - "j'ai 16 ans"
+      - "j'ai 17 ans"
+      - "collège"
+      - "lycée"
+    severity: high
+    auto_escalate: true
+    
+  - id: harassment_hate
+    name: "Harcèlement / Haine"
+    description: "Message offensant, harcèlement"
+    keywords:
+      - "insulte"
+      - "con"
+      - "merde"
+      - "nul"
+      - "raciste"
+    severity: critical
+    auto_escalate: true
+    
+  - id: legal_press
+    name: "Légal / Presse"
+    description: "Mention juridique, média, journaliste"
+    keywords:
+      - "avocat"
+      - "tribunal"
+      - "procès"
+      - "juridique"
+      - "journaliste"
+      - "presse"
+      - "média"
+      - "article"
+    severity: high
+    auto_escalate: true
+    
+  - id: pregnancy
+    name: "Grossesse / Allaitement"
+    description: "Utilisatrice enceinte ou allaitante"
+    keywords:
+      - "enceinte"
+      - "grossesse"
+      - "allaitement"
+      - "allaitante"
+    severity: medium
+    auto_escalate: false
+
+# Niveaux de risque
+risk_levels:
+  low: 
+    score: 0
+    description: "Aucun risque détecté"
+    allow_autopilot: true
+    
+  medium:
+    score: 1
+    description: "Risque modéré, vérification recommandée"
+    allow_autopilot: false
+    
+  high:
+    score: 2
+    description: "Risque élevé, HITL obligatoire"
+    allow_autopilot: false
+    
+  critical:
+    score: 3
+    description: "Risque critique, escalade immédiate"
+    allow_autopilot: false

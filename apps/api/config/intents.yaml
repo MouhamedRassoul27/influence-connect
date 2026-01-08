@@ -1,0 +1,67 @@
+# Intents (5-10 categories principales)
+intents:
+  - id: availability
+    name: "Disponibilité / Prix"
+    description: "Questions sur prix, stock, où acheter"
+    keywords: ["prix", "coût", "disponible", "stock", "rupture", "acheter où"]
+    safe_autopilot: true
+    
+  - id: routine_usage
+    name: "Routine / Usage"
+    description: "Comment utiliser, fréquence, routine beauté"
+    keywords: ["comment utiliser", "routine", "application", "fréquence", "matin", "soir"]
+    safe_autopilot: true
+    
+  - id: shade_color
+    name: "Teinte / Coloration"
+    description: "Questions sur teintes, couleurs, nuances"
+    keywords: ["teinte", "couleur", "nuance", "shade", "ton", "coloration"]
+    safe_autopilot: true
+    
+  - id: delivery_return
+    name: "Livraison / Retour"
+    description: "Délais, frais, retours, échanges"
+    keywords: ["livraison", "délai", "frais", "retour", "échange", "remboursement"]
+    safe_autopilot: true
+    
+  - id: complaint
+    name: "Réclamation"
+    description: "Plainte, insatisfaction, problème qualité"
+    keywords: ["problème", "déçu", "pas content", "mauvais", "défectueux"]
+    safe_autopilot: false
+    
+  - id: where_to_buy
+    name: "Où acheter"
+    description: "Points de vente, retailers, online"
+    keywords: ["acheter", "trouver", "magasin", "boutique", "site", "revendeur"]
+    safe_autopilot: true
+    
+  - id: ingredients
+    name: "Ingrédients / Formulation"
+    description: "Questions sur composition, ingrédients"
+    keywords: ["ingrédient", "composition", "formule", "contient", "sans"]
+    safe_autopilot: false
+    
+  - id: recommendation
+    name: "Recommandation produit"
+    description: "Demande de conseil, quel produit choisir"
+    keywords: ["recommande", "conseille", "quel", "meilleur", "choix"]
+    safe_autopilot: false
+    
+  - id: spam
+    name: "Spam / Hors sujet"
+    description: "Messages non pertinents"
+    keywords: []
+    safe_autopilot: false
+    
+  - id: unknown
+    name: "Intent non identifié"
+    description: "Fallback"
+    keywords: []
+    safe_autopilot: false
+
+# Configuration autopilot
+autopilot_rules:
+  min_confidence: 0.85
+  risk_level_max: "low"
+  safe_intents_only: true

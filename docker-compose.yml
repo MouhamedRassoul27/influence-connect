@@ -1,0 +1,77 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: influence-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-influence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-influence123}
+      POSTGRES_DB: ${POSTGRES_DB:-influenceconnect}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./apps/api/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U influence"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: influence-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: influence-api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://influence:influence123@db:5432/influenceconnect}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      MODEL_CLASSIFIER: ${MODEL_CLASSIFIER:-claude-haiku-4-5-20251001}
+      MODEL_DRAFTER: ${MODEL_DRAFTER:-claude-sonnet-4-5-20250929}
+      MODEL_VERIFIER: ${MODEL_VERIFIER:-claude-opus-4-5-20251101}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
+      HITL_REQUIRED: ${HITL_REQUIRED:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+      - ./knowledge:/app/knowledge
+      - ./scripts:/app/scripts
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: influence-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    command: npm run dev
+
+volumes:
+  postgres_data:

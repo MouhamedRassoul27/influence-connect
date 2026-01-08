@@ -1,0 +1,19 @@
+# Modèles Claude (IDs EXACTS - NE PAS MODIFIER)
+classifier: claude-haiku-4-5-20251001
+drafter: claude-sonnet-4-5-20250929
+verifier: claude-opus-4-5-20251101
+
+# Embeddings
+embedding_model: BAAI/bge-m3
+embedding_dimension: 1024
+
+# RAG
+rag_top_k: 5
+rag_similarity_threshold: 0.7
+
+# Limites
+max_draft_tokens: 500
+max_verify_tokens: 300
+temperature_draft: 0.8
+temperature_classify: 0.3
+temperature_verify: 0.5
