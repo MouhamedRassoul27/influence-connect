@@ -2,7 +2,8 @@
 SQLAlchemy ORM Models - defines database schema
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, JSONB, JSON, ForeignKey, Index, UniqueConstraint, ARRAY
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, Index, UniqueConstraint, JSON
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 from datetime import datetime
