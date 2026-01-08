@@ -68,6 +68,7 @@ class Draft(Base):
     verification_verdict = Column(String(20), nullable=True)
     verification_issues = Column(JSON, nullable=True)
     requires_hitl = Column(Boolean, default=True)
+    can_autopilot = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
     meta = Column(JSON, nullable=True)
 
