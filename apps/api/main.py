@@ -80,7 +80,6 @@ async def api_root():
             "tracking": "/api/tracking"
         }
     }
-    }
 
 if __name__ == "__main__":
     import uvicorn
