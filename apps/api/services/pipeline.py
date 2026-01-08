@@ -12,6 +12,8 @@ from services.classifier import ClassifierService
 from services.rag import RAGService
 from services.drafter import DrafterService
 from services.verifier import VerifierService
+from services.loreal_tools import LoreaToolService
+from services.influencer_scoring import InfluencerScoringService
 from config import settings, get_safe_autopilot_intents, get_critical_risk_flags
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,8 @@ class AIPipeline:
         self.rag = rag
         self.drafter = drafter
         self.verifier = verifier
+        self.loreal_tools = LoreaToolService()
+        self.influencer_scorer = InfluencerScoringService()
         
     async def process(
         self,
@@ -232,3 +236,76 @@ class AIPipeline:
             }
         )
         await db.commit()
+    
+    async def should_convert_to_dm(
+        self,
+        classification: ClassificationOutput,
+        message: str,
+        context: dict = None
+    ) -> bool:
+        """
+        Determine if comment should be converted to DM
+        Convert if: needs extended conversation, personal recommendation, product demo
+        """
+        dm_intents = {
+            "recommendation",
+            "routine_usage",
+            "shade_color",
+            "ingredients"
+        }
+        
+        convert = classification.intent.value in dm_intents and classification.should_dm
+        logger.info(f"{'📨' if convert else '💬'} Comment → DM: {convert}")
+        return convert
+    
+    async def enrich_with_loreal_tools(
+        self,
+        draft: DraftOutput,
+        classification: ClassificationOutput,
+        db: AsyncSession
+    ) -> DraftOutput:
+        """Enhance draft with L'Oréal products and tools"""
+        try:
+            if classification.intent.value == "recommendation":
+                products = await self.loreal_tools.recommend_products(
+                    classification.reasoning
+                )
+                for p in products[:3]:
+                    draft.suggested_products.append({
+                        "name": p["name"],
+                        "category": p["category"],
+                        "price": p["price"],
+                        "reason": "L'Oréal recommended"
+                    })
+                logger.info(f"✅ Added L'Oréal products")
+            return draft
+        except Exception as e:
+            logger.warning(f"⚠️  Tool enrichment error: {e}")
+            return draft
+    
+    async def analyze_for_ambassador(
+        self,
+        sender_id: str,
+        sender_username: str,
+        user_profile: dict = None
+    ) -> dict:
+        """Check if user qualifies for ambassador program"""
+        try:
+            if not user_profile:
+                return {}
+            
+            profile = await self.influencer_scorer.analyze_user_profile(
+                sender_id,
+                user_profile
+            )
+            
+            proposal = await self.influencer_scorer.propose_ambassador(profile)
+            
+            if proposal:
+                logger.info(f"🌟 Ambassador opportunity: {sender_username}")
+                return proposal.dict()
+            
+            return {}
+        except Exception as e:
+            logger.warning(f"⚠️  Ambassador error: {e}")
+            return {}
