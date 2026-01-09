@@ -323,13 +323,13 @@ async def demo_message(
         
         # Process through pipeline
         logger.info(f"🚀 Processing demo message through AI pipeline...")
-        result = await pipeline.process(
+        processed_msg = await pipeline.process(
             message=message,
             message_id=message_id,
             db=db
         )
         
-        logger.info(f"✅ Demo processing complete: verdict={result.get('verification_verdict')}")
+        logger.info(f"✅ Demo processing complete: verdict={processed_msg.verification_verdict}")
         
         return {
             "status": "ok",
@@ -337,7 +337,12 @@ async def demo_message(
             "message_id": message_id,
             "sender": sender_name,
             "message": message,
-            "result": result,
+            "classification": {
+                "intent": processed_msg.classification_intent,
+                "risk": processed_msg.classification_risk,
+            },
+            "response": processed_msg.draft_message,
+            "verdict": processed_msg.verification_verdict,
             "timestamp": __import__('datetime').datetime.utcnow().isoformat()
         }
         
