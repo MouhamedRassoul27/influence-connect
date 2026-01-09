@@ -6,7 +6,6 @@ Receive real-time DMs and comments from Instagram
 import logging
 import os
 import sys
-import requests
 from pathlib import Path
 
 from fastapi import APIRouter, Request, HTTPException, Depends
@@ -158,6 +157,8 @@ async def fetch_real_messages(db: AsyncSession = Depends(get_db)):
     Useful when webhooks aren't ready yet
     """
     try:
+        import requests  # Import only when needed
+        
         if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
             return {
                 "status": "error",
