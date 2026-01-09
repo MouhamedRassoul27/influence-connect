@@ -341,8 +341,8 @@ async def demo_message(
                 "intent": processed_msg.classification.intent,
                 "risk_level": processed_msg.classification.risk_level,
             },
-            "response": processed_msg.draft.text,
-            "suggested_influencers": processed_msg.draft.suggested_influencers if hasattr(processed_msg.draft, 'suggested_influencers') else [],
+            "ai_response": processed_msg.draft.reply_text,
+            "suggested_products": [p.dict() for p in processed_msg.draft.suggested_products],
             "verdict": processed_msg.verification.verdict,
             "requires_approval": processed_msg.requires_hitl,
             "timestamp": __import__('datetime').datetime.utcnow().isoformat()
