@@ -11,6 +11,7 @@ redis==5.0.1
 pyyaml==6.0.1
 python-multipart==0.0.6
 httpx==0.26.0
+requests==2.31.0
 numpy==1.26.3
 torch==2.2.0
 asyncpg==0.29.0
