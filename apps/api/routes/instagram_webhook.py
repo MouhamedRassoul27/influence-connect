@@ -329,7 +329,7 @@ async def demo_message(
             db=db
         )
         
-        logger.info(f"✅ Demo processing complete: verdict={processed_msg.verification_verdict}")
+        logger.info(f"✅ Demo processing complete: verdict={processed_msg.verification.verdict}")
         
         return {
             "status": "ok",
@@ -338,11 +338,13 @@ async def demo_message(
             "sender": sender_name,
             "message": message,
             "classification": {
-                "intent": processed_msg.classification_intent,
-                "risk": processed_msg.classification_risk,
+                "intent": processed_msg.classification.intent,
+                "risk_level": processed_msg.classification.risk_level,
             },
-            "response": processed_msg.draft_message,
-            "verdict": processed_msg.verification_verdict,
+            "response": processed_msg.draft.text,
+            "suggested_influencers": processed_msg.draft.suggested_influencers if hasattr(processed_msg.draft, 'suggested_influencers') else [],
+            "verdict": processed_msg.verification.verdict,
+            "requires_approval": processed_msg.requires_hitl,
             "timestamp": __import__('datetime').datetime.utcnow().isoformat()
         }
         
