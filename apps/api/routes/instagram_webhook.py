@@ -157,7 +157,7 @@ async def fetch_real_messages(db: AsyncSession = Depends(get_db)):
     Useful when webhooks aren't ready yet
     """
     try:
-        import requests  # Import only when needed
+        import httpx  # Use httpx instead of requests - already installed
         
         if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
             return {
@@ -175,7 +175,9 @@ async def fetch_real_messages(db: AsyncSession = Depends(get_db)):
             "limit": 10
         }
         
-        response = requests.get(url, params=params)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+        
         if response.status_code != 200:
             logger.error(f"Instagram API error: {response.text}")
             return {"status": "error", "reason": response.text}
